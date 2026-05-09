@@ -198,66 +198,74 @@
 *
 *        Form  H * C
 *
-         IF( LASTV.EQ.FIRSTV ) THEN        
+         IF( LASTV.GT.0 ) THEN
+            IF( LASTV.EQ.FIRSTV ) THEN
 *
-*           C(lastv,1:lastc) := ( 1 - tau ) * C(lastv,1:lastc)
+*              C(lastv,1:lastc) := ( 1 - tau ) * C(lastv,1:lastc)
 *
-            CALL ZSCAL( LASTC, ONE - TAU, C( LASTV, 1 ), LDC )
-         ELSE
+               CALL ZSCAL( LASTC, ONE - TAU, C( LASTV, 1 ), LDC )
+            ELSE
 *
-*           w(1:lastc,1) := C(firstv:lastv-1,1:lastc)**T * v(firstv:lastv-1,1)
+*              w(1:lastc,1) := C(firstv:lastv-1,1:lastc)**T
+*                            * v(firstv:lastv-1,1)
 *
-            CALL ZGEMV( 'Conjugate transpose', LASTV - FIRSTV, LASTC,
-     $                  ONE, C( FIRSTV, 1 ), LDC, V( I ), INCV, ZERO,
-     $                  WORK, 1 )
+               CALL ZGEMV( 'Conjugate transpose', LASTV - FIRSTV,
+     $                     LASTC, ONE, C( FIRSTV, 1 ), LDC, V( I ),
+     $                     INCV, ZERO, WORK, 1 )
 *
-*           w(1:lastc,1) += C(lastv,1:lastc)**H * v(lastv,1)
+*              w(1:lastc,1) += C(lastv,1:lastc)**H * v(lastv,1)
 *
-            DO J = 1, LASTC
-               WORK( J ) = WORK( J ) + CONJG( C( LASTV, J ) )
-            END DO
+               DO J = 1, LASTC
+                  WORK( J ) = WORK( J ) + CONJG( C( LASTV, J ) )
+               END DO
 *
-*           C(lastv,1:lastc) += - tau * v(lastv,1) * w(1:lastc,1)**H
+*              C(lastv,1:lastc) += - tau * v(lastv,1) * w(1:lastc,1)**H
 *
-            DO J = 1, LASTC
-               C( LASTV, J ) = C( LASTV, J )
-     $                         - TAU * CONJG( WORK( J ) )
-            END DO
+               DO J = 1, LASTC
+                  C( LASTV, J ) = C( LASTV, J )
+     $                            - TAU * CONJG( WORK( J ) )
+               END DO
 *
-*           C(firstv:lastv-1,1:lastc) += - tau * v(firstv:lastv-1,1) * w(1:lastc,1)**H
+*              C(firstv:lastv-1,1:lastc) +=
+*                  - tau * v(firstv:lastv-1,1) * w(1:lastc,1)**H
 *
-            CALL ZGERC( LASTV - FIRSTV, LASTC, -TAU, V( I ), INCV,
-     $                  WORK, 1, C( FIRSTV, 1 ), LDC)
+               CALL ZGERC( LASTV - FIRSTV, LASTC, -TAU, V( I ), INCV,
+     $                     WORK, 1, C( FIRSTV, 1 ), LDC)
+            END IF
          END IF
       ELSE
 *
 *        Form  C * H
 *
-         IF( LASTV.EQ.FIRSTV ) THEN
+         IF( LASTV.GT.0 ) THEN
+            IF( LASTV.EQ.FIRSTV ) THEN
 *
-*           C(1:lastc,lastv) := ( 1 - tau ) * C(1:lastc,lastv)
+*              C(1:lastc,lastv) := ( 1 - tau ) * C(1:lastc,lastv)
 *
-            CALL ZSCAL( LASTC, ONE - TAU, C( 1, LASTV ), 1 )
-         ELSE
+               CALL ZSCAL( LASTC, ONE - TAU, C( 1, LASTV ), 1 )
+            ELSE
 *
-*           w(1:lastc,1) := C(1:lastc,firstv:lastv-1) * v(firstv:lastv-1,1)
+*              w(1:lastc,1) := C(1:lastc,firstv:lastv-1)
+*                            * v(firstv:lastv-1,1)
 *
-            CALL ZGEMV( 'No transpose', LASTC, LASTV - FIRSTV, ONE,
-     $                  C( 1, FIRSTV ), LDC, V( I ), INCV, ZERO,
-     $                  WORK, 1 )
+               CALL ZGEMV( 'No transpose', LASTC, LASTV - FIRSTV, ONE,
+     $                     C( 1, FIRSTV ), LDC, V( I ), INCV, ZERO,
+     $                     WORK, 1 )
 *
-*           w(1:lastc,1) += C(1:lastc,lastv) * v(lastv,1)
+*              w(1:lastc,1) += C(1:lastc,lastv) * v(lastv,1)
 *
-            CALL ZAXPY( LASTC, ONE, C( 1, LASTV ), 1, WORK, 1 )
+               CALL ZAXPY( LASTC, ONE, C( 1, LASTV ), 1, WORK, 1 )
 *
-*           C(1:lastc,lastv) += - tau * v(lastv,1) * w(1:lastc,1)
+*              C(1:lastc,lastv) += - tau * v(lastv,1) * w(1:lastc,1)
 *
-            CALL ZAXPY( LASTC, -TAU, WORK, 1, C( 1, LASTV ), 1 )
+               CALL ZAXPY( LASTC, -TAU, WORK, 1, C( 1, LASTV ), 1 )
 *
-*           C(1:lastc,firstv:lastv-1) += - tau * w(1:lastc,1) * v(firstv:lastv-1)**H
+*              C(1:lastc,firstv:lastv-1) +=
+*                  - tau * w(1:lastc,1) * v(firstv:lastv-1)**H
 *
-            CALL ZGERC( LASTC, LASTV - FIRSTV, -TAU, WORK, 1, V( I ),
-     $                  INCV, C( 1, FIRSTV ), LDC )
+               CALL ZGERC( LASTC, LASTV - FIRSTV, -TAU, WORK, 1,
+     $                     V( I ), INCV, C( 1, FIRSTV ), LDC )
+            END IF
          END IF
       END IF
       RETURN

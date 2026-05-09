@@ -189,61 +189,69 @@
 *
 *        Form  H * C
 *
-         IF( LASTV.EQ.FIRSTV ) THEN        
+         IF( LASTV.GT.0 ) THEN
+            IF( LASTV.EQ.FIRSTV ) THEN
 *
-*           C(lastv,1:lastc) := ( 1 - tau ) * C(lastv,1:lastc)
+*              C(lastv,1:lastc) := ( 1 - tau ) * C(lastv,1:lastc)
 *
-            CALL SSCAL( LASTC, ONE - TAU, C( LASTV, 1 ), LDC )
-         ELSE
+               CALL SSCAL( LASTC, ONE - TAU, C( LASTV, 1 ), LDC )
+            ELSE
 *
-*           w(1:lastc,1) := C(firstv:lastv-1,1:lastc)**T * v(firstv:lastv-1,1)
+*              w(1:lastc,1) := C(firstv:lastv-1,1:lastc)**T
+*                            * v(firstv:lastv-1,1)
 *
-            CALL SGEMV( 'Transpose', LASTV - FIRSTV, LASTC, ONE,
-     $                  C( FIRSTV, 1 ), LDC, V( I ), INCV, ZERO,
-     $                  WORK, 1 )
+               CALL SGEMV( 'Transpose', LASTV - FIRSTV, LASTC, ONE,
+     $                     C( FIRSTV, 1 ), LDC, V( I ), INCV, ZERO,
+     $                     WORK, 1 )
 *
-*           w(1:lastc,1) += C(lastv,1:lastc)**T * v(lastv,1)
+*              w(1:lastc,1) += C(lastv,1:lastc)**T * v(lastv,1)
 *
-            CALL SAXPY( LASTC, ONE, C( LASTV, 1 ), LDC, WORK, 1 )
+               CALL SAXPY( LASTC, ONE, C( LASTV, 1 ), LDC, WORK, 1 )
 *
-*           C(lastv,1:lastc) += - tau * v(lastv,1) * w(1:lastc,1)**T
+*              C(lastv,1:lastc) += - tau * v(lastv,1) * w(1:lastc,1)**T
 *
-            CALL SAXPY( LASTC, -TAU, WORK, 1, C( LASTV, 1 ), LDC )
+               CALL SAXPY( LASTC, -TAU, WORK, 1, C( LASTV, 1 ), LDC )
 *
-*           C(firstv:lastv-1,1:lastc) += - tau * v(firstv:lastv-1,1) * w(1:lastc,1)**T
+*              C(firstv:lastv-1,1:lastc) +=
+*                  - tau * v(firstv:lastv-1,1) * w(1:lastc,1)**T
 *
-            CALL SGER( LASTV - FIRSTV, LASTC, -TAU, V( I ), INCV,
-     $                 WORK, 1, C( FIRSTV, 1 ), LDC)
+               CALL SGER( LASTV - FIRSTV, LASTC, -TAU, V( I ), INCV,
+     $                    WORK, 1, C( FIRSTV, 1 ), LDC)
+            END IF
          END IF
       ELSE
 *
 *        Form  C * H
 *
-         IF( LASTV.EQ.FIRSTV ) THEN
+         IF( LASTV.GT.0 ) THEN
+            IF( LASTV.EQ.FIRSTV ) THEN
 *
-*           C(1:lastc,lastv) := ( 1 - tau ) * C(1:lastc,lastv)
+*              C(1:lastc,lastv) := ( 1 - tau ) * C(1:lastc,lastv)
 *
-            CALL SSCAL( LASTC, ONE - TAU, C( 1, LASTV ), 1 )
-         ELSE
+               CALL SSCAL( LASTC, ONE - TAU, C( 1, LASTV ), 1 )
+            ELSE
 *
-*           w(1:lastc,1) := C(1:lastc,firstv:lastv-1) * v(firstv:lastv-1,1)
+*              w(1:lastc,1) := C(1:lastc,firstv:lastv-1)
+*                            * v(firstv:lastv-1,1)
 *
-            CALL SGEMV( 'No transpose', LASTC, LASTV - FIRSTV, ONE,
-     $                  C( 1, FIRSTV ), LDC, V( I ), INCV, ZERO,
-     $                  WORK, 1 )
+               CALL SGEMV( 'No transpose', LASTC, LASTV - FIRSTV, ONE,
+     $                     C( 1, FIRSTV ), LDC, V( I ), INCV, ZERO,
+     $                     WORK, 1 )
 *
-*           w(1:lastc,1) += C(1:lastc,lastv) * v(lastv,1)
+*              w(1:lastc,1) += C(1:lastc,lastv) * v(lastv,1)
 *
-            CALL SAXPY( LASTC, ONE, C( 1, LASTV ), 1, WORK, 1 )
+               CALL SAXPY( LASTC, ONE, C( 1, LASTV ), 1, WORK, 1 )
 *
-*           C(1:lastc,lastv) += - tau * v(lastv,1) * w(1:lastc,1)
+*              C(1:lastc,lastv) += - tau * v(lastv,1) * w(1:lastc,1)
 *
-            CALL SAXPY( LASTC, -TAU, WORK, 1, C( 1, LASTV ), 1 )
+               CALL SAXPY( LASTC, -TAU, WORK, 1, C( 1, LASTV ), 1 )
 *
-*           C(1:lastc,firstv:lastv-1) += - tau * w(1:lastc,1) * v(firstv:lastv-1)**T
+*              C(1:lastc,firstv:lastv-1) +=
+*                  - tau * w(1:lastc,1) * v(firstv:lastv-1)**T
 *
-            CALL SGER( LASTC, LASTV - FIRSTV, -TAU, WORK, 1, V( I ),
-     $                 INCV, C( 1, FIRSTV ), LDC )
+               CALL SGER( LASTC, LASTV - FIRSTV, -TAU, WORK, 1,
+     $                    V( I ), INCV, C( 1, FIRSTV ), LDC )
+            END IF
          END IF
       END IF
       RETURN
